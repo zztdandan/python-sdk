@@ -6,6 +6,9 @@ import copy
 import inspect
 import json
 import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from uuid import uuid4
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -36,6 +39,9 @@ MethodHandler = Callable[[str, JsonValue | None, bool], Awaitable[JsonValue | No
 
 
 __all__ = ["Connection", "JsonValue", "MethodHandler", "StreamDirection", "StreamEvent"]
+
+OVERSIZE_WARN_THRESHOLD_BYTES = 64 * 1024
+OVERSIZE_UPSTREAM_TRUNCATE_BYTES = 60 * 1024
 
 
 DispatcherFactory = Callable[
@@ -151,6 +157,20 @@ class Connection:
                 line = await self._reader.readline()
                 if not line:
                     break
+                if len(line) > OVERSIZE_WARN_THRESHOLD_BYTES:
+                    record_path = self._persist_oversize_frame(line)
+                    logging.error(
+                        "Oversize ACP frame detected: %s bytes (threshold=%s). Full payload saved to %s",
+                        len(line),
+                        OVERSIZE_WARN_THRESHOLD_BYTES,
+                        record_path,
+                    )
+                    preview = line[:OVERSIZE_UPSTREAM_TRUNCATE_BYTES].decode("utf-8", errors="replace")
+                    raise ValueError(
+                        "Oversize ACP frame received. "
+                        f"bytes={len(line)}, threshold={OVERSIZE_WARN_THRESHOLD_BYTES}, "
+                        f"record_path={record_path}, preview(60KB)={preview}"
+                    )
                 try:
                     message: dict[str, Any] = json.loads(line)
                 except Exception:
@@ -160,6 +180,14 @@ class Connection:
                 await self._process_message(message)
         except asyncio.CancelledError:
             return
+
+    def _persist_oversize_frame(self, line: bytes) -> Path:
+        out_dir = Path.cwd() / "acp_oversize_frames"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        out_path = out_dir / f"frame_{stamp}_{uuid4().hex}.jsonl"
+        out_path.write_bytes(line)
+        return out_path
 
     async def _process_message(self, message: dict[str, Any]) -> None:
         method = message.get("method")

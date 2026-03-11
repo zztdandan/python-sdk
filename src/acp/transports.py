@@ -8,7 +8,12 @@ from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-__all__ = ["DEFAULT_INHERITED_ENV_VARS", "default_environment", "spawn_stdio_transport"]
+__all__ = [
+    "DEFAULT_INHERITED_ENV_VARS",
+    "DEFAULT_STDIO_LIMIT_BYTES",
+    "default_environment",
+    "spawn_stdio_transport",
+]
 
 DEFAULT_INHERITED_ENV_VARS = (
     [
@@ -28,6 +33,8 @@ DEFAULT_INHERITED_ENV_VARS = (
     if os.name == "nt"
     else ["HOME", "LOGNAME", "PATH", "SHELL", "TERM", "USER"]
 )
+
+DEFAULT_STDIO_LIMIT_BYTES = 1024 * 1024
 
 
 def default_environment() -> dict[str, str]:
@@ -51,7 +58,7 @@ async def spawn_stdio_transport(
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
     stderr: int | None = aio_subprocess.PIPE,
-    limit: int | None = None,
+    limit: int | None = DEFAULT_STDIO_LIMIT_BYTES,
     shutdown_timeout: float = 2.0,
 ) -> AsyncIterator[tuple[asyncio.StreamReader, asyncio.StreamWriter, aio_subprocess.Process]]:
     """Launch a subprocess and expose its stdio streams as asyncio transports.

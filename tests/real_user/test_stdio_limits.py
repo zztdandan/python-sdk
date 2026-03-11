@@ -6,9 +6,11 @@ import textwrap
 
 import pytest
 
-from acp.transports import spawn_stdio_transport
+from acp.transports import DEFAULT_STDIO_LIMIT_BYTES, spawn_stdio_transport
 
 LARGE_LINE_SIZE = 70 * 1024
+OVERSIZE_DEFAULT_LINE_SIZE = DEFAULT_STDIO_LIMIT_BYTES + 128 * 1024
+BUFFER_TEST_LINE_SIZE = 48 * 1024
 
 
 def _large_line_script(size: int = LARGE_LINE_SIZE) -> str:
@@ -24,7 +26,7 @@ def _large_line_script(size: int = LARGE_LINE_SIZE) -> str:
 
 @pytest.mark.asyncio
 async def test_spawn_stdio_transport_hits_default_limit() -> None:
-    script = _large_line_script()
+    script = _large_line_script(OVERSIZE_DEFAULT_LINE_SIZE)
     async with spawn_stdio_transport(sys.executable, "-c", script) as (reader, _writer, _process):
         # readline() re-raises LimitOverrunError as ValueError on CPython 3.12+.
         with pytest.raises(ValueError):
@@ -63,8 +65,8 @@ class TestAgent(Agent):
 asyncio.run(run_agent(TestAgent(), stdio_buffer_limit_bytes=1024))
 """)
 
-        # Send a 70KB message - should fail with 1KB buffer
-        large_msg = '{"jsonrpc":"2.0","method":"test","params":{"data":"' + "X" * LARGE_LINE_SIZE + '"}}\n'
+        # Send a 48KB message - should fail with 1KB buffer but remain below 64KB oversize guard.
+        large_msg = '{"jsonrpc":"2.0","method":"test","params":{"data":"' + "X" * BUFFER_TEST_LINE_SIZE + '"}}\n'
         result = subprocess.run(  # noqa: S603
             [sys.executable, small_agent], input=large_msg, capture_output=True, text=True, timeout=2
         )
@@ -74,7 +76,7 @@ asyncio.run(run_agent(TestAgent(), stdio_buffer_limit_bytes=1024))
             f"Expected error with small buffer, got: {result.stderr}"
         )
 
-        # Test 2: Large buffer (200KB) succeeds with large message (70KB)
+        # Test 2: Large buffer succeeds with the same 48KB message.
         large_agent = os.path.join(tmpdir, "large_agent.py")
         with open(large_agent, "w") as f:
             f.write(f"""
@@ -86,7 +88,7 @@ class TestAgent(Agent):
     async def list_capabilities(self):
         return {{"capabilities": {{}}}}
 
-asyncio.run(run_agent(TestAgent(), stdio_buffer_limit_bytes={LARGE_LINE_SIZE * 3}))
+asyncio.run(run_agent(TestAgent(), stdio_buffer_limit_bytes={BUFFER_TEST_LINE_SIZE * 3}))
 """)
 
         # Same message, but with a buffer 3x the size - should handle it
