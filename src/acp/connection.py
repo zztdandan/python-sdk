@@ -166,11 +166,15 @@ class Connection:
                         record_path,
                     )
                     preview = line[:OVERSIZE_UPSTREAM_TRUNCATE_BYTES].decode("utf-8", errors="replace")
-                    raise ValueError(
-                        "Oversize ACP frame received. "
-                        f"bytes={len(line)}, threshold={OVERSIZE_WARN_THRESHOLD_BYTES}, "
-                        f"record_path={record_path}, preview(60KB)={preview}"
+                    logging.error(
+                        "Skipping oversize ACP frame to keep session alive. "
+                        "bytes=%s threshold=%s record_path=%s preview(60KB)=%s",
+                        len(line),
+                        OVERSIZE_WARN_THRESHOLD_BYTES,
+                        record_path,
+                        preview,
                     )
+                    continue
                 try:
                     message: dict[str, Any] = json.loads(line)
                 except Exception:
