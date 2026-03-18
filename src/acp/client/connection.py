@@ -13,6 +13,8 @@ from ..schema import (
     AuthenticateResponse,
     CancelNotification,
     ClientCapabilities,
+    CloseSessionRequest,
+    CloseSessionResponse,
     EmbeddedResourceContentBlock,
     ForkSessionRequest,
     ForkSessionResponse,
@@ -33,8 +35,8 @@ from ..schema import (
     ResourceContentBlock,
     ResumeSessionRequest,
     ResumeSessionResponse,
-    SetSessionConfigOptionRequest,
     SetSessionConfigOptionResponse,
+    SetSessionConfigOptionSelectRequest,
     SetSessionModelRequest,
     SetSessionModelResponse,
     SetSessionModeRequest,
@@ -152,14 +154,14 @@ class ClientSideConnection:
             SetSessionModelResponse,
         )
 
-    @param_model(SetSessionConfigOptionRequest)
+    @param_model(SetSessionConfigOptionSelectRequest)
     async def set_config_option(
         self, config_id: str, session_id: str, value: str, **kwargs: Any
     ) -> SetSessionConfigOptionResponse:
         return await request_model_from_dict(
             self._conn,
             AGENT_METHODS["session_set_config_option"],
-            SetSessionConfigOptionRequest(
+            SetSessionConfigOptionSelectRequest(
                 config_id=config_id, session_id=session_id, value=value, field_meta=kwargs or None
             ),
             SetSessionConfigOptionResponse,
@@ -185,6 +187,7 @@ class ClientSideConnection:
             | EmbeddedResourceContentBlock
         ],
         session_id: str,
+        message_id: str | None = None,
         **kwargs: Any,
     ) -> PromptResponse:
         return await request_model(
@@ -222,6 +225,15 @@ class ClientSideConnection:
             AGENT_METHODS["session_resume"],
             ResumeSessionRequest(session_id=session_id, cwd=cwd, mcp_servers=mcp_servers, field_meta=kwargs or None),
             ResumeSessionResponse,
+        )
+
+    @param_model(CloseSessionRequest)
+    async def close_session(self, session_id: str, **kwargs: Any) -> CloseSessionResponse | None:
+        return await request_model_from_dict(
+            self._conn,
+            AGENT_METHODS["session_close"],
+            CloseSessionRequest(session_id=session_id, field_meta=kwargs or None),
+            CloseSessionResponse,
         )
 
     @param_model(CancelNotification)

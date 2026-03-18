@@ -12,6 +12,8 @@ from .schema import (
     AvailableCommandsUpdate,
     CancelNotification,
     ClientCapabilities,
+    CloseSessionRequest,
+    CloseSessionResponse,
     ConfigOptionUpdate,
     CreateTerminalRequest,
     CreateTerminalResponse,
@@ -25,8 +27,8 @@ from .schema import (
     Implementation,
     InitializeRequest,
     InitializeResponse,
-    KillTerminalCommandRequest,
-    KillTerminalCommandResponse,
+    KillTerminalRequest,
+    KillTerminalResponse,
     ListSessionsRequest,
     ListSessionsResponse,
     LoadSessionRequest,
@@ -48,8 +50,8 @@ from .schema import (
     ResumeSessionResponse,
     SessionInfoUpdate,
     SessionNotification,
-    SetSessionConfigOptionRequest,
     SetSessionConfigOptionResponse,
+    SetSessionConfigOptionSelectRequest,
     SetSessionModelRequest,
     SetSessionModelResponse,
     SetSessionModeRequest,
@@ -132,10 +134,8 @@ class Client(Protocol):
         self, session_id: str, terminal_id: str, **kwargs: Any
     ) -> WaitForTerminalExitResponse: ...
 
-    @param_model(KillTerminalCommandRequest)
-    async def kill_terminal(
-        self, session_id: str, terminal_id: str, **kwargs: Any
-    ) -> KillTerminalCommandResponse | None: ...
+    @param_model(KillTerminalRequest)
+    async def kill_terminal(self, session_id: str, terminal_id: str, **kwargs: Any) -> KillTerminalResponse | None: ...
 
     async def ext_method(self, method: str, params: dict[str, Any]) -> dict[str, Any]: ...
 
@@ -181,7 +181,7 @@ class Agent(Protocol):
         self, model_id: str, session_id: str, **kwargs: Any
     ) -> SetSessionModelResponse | None: ...
 
-    @param_model(SetSessionConfigOptionRequest)
+    @param_model(SetSessionConfigOptionSelectRequest)
     async def set_config_option(
         self, config_id: str, session_id: str, value: str, **kwargs: Any
     ) -> SetSessionConfigOptionResponse | None: ...
@@ -200,6 +200,7 @@ class Agent(Protocol):
             | EmbeddedResourceContentBlock
         ],
         session_id: str,
+        message_id: str | None = None,
         **kwargs: Any,
     ) -> PromptResponse: ...
 
@@ -220,6 +221,9 @@ class Agent(Protocol):
         mcp_servers: list[HttpMcpServer | SseMcpServer | McpServerStdio] | None = None,
         **kwargs: Any,
     ) -> ResumeSessionResponse: ...
+
+    @param_model(CloseSessionRequest)
+    async def close_session(self, session_id: str, **kwargs: Any) -> CloseSessionResponse | None: ...
 
     @param_model(CancelNotification)
     async def cancel(self, session_id: str, **kwargs: Any) -> None: ...

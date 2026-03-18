@@ -8,7 +8,7 @@ from ..meta import CLIENT_METHODS
 from ..router import MessageRouter
 from ..schema import (
     CreateTerminalRequest,
-    KillTerminalCommandRequest,
+    KillTerminalRequest,
     ReadTextFileRequest,
     ReleaseTerminalRequest,
     RequestPermissionRequest,
@@ -68,7 +68,7 @@ def build_client_router(client: Client, use_unstable_protocol: bool = False) -> 
     )
     router.route_request(
         CLIENT_METHODS["terminal_kill"],
-        KillTerminalCommandRequest,
+        KillTerminalRequest,
         client,
         "kill_terminal",
         optional=True,

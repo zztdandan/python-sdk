@@ -28,7 +28,7 @@ from acp.schema import (
     EnvVariable,
     ImageContentBlock,
     Implementation,
-    KillTerminalCommandResponse,
+    KillTerminalResponse,
     PermissionOption,
     ReadTextFileResponse,
     ReleaseTerminalResponse,
@@ -86,9 +86,7 @@ class ExampleClient(Client):
     ) -> WaitForTerminalExitResponse:
         raise RequestError.method_not_found("terminal/wait_for_exit")
 
-    async def kill_terminal(
-        self, session_id: str, terminal_id: str, **kwargs: Any
-    ) -> KillTerminalCommandResponse | None:
+    async def kill_terminal(self, session_id: str, terminal_id: str, **kwargs: Any) -> KillTerminalResponse | None:
         raise RequestError.method_not_found("terminal/kill")
 
     async def session_update(

@@ -10,7 +10,7 @@ from acp import (
     AuthenticateResponse,
     CreateTerminalResponse,
     InitializeResponse,
-    KillTerminalCommandResponse,
+    KillTerminalResponse,
     LoadSessionResponse,
     NewSessionResponse,
     PromptRequest,
@@ -43,6 +43,7 @@ from acp.schema import (
     HttpMcpServer,
     ImageContentBlock,
     Implementation,
+    ListSessionsResponse,
     McpServerStdio,
     PermissionOption,
     ResourceContentBlock,
@@ -211,7 +212,7 @@ class TestClient:
 
     async def kill_terminal(
         self, session_id: str, terminal_id: str | None = None, **kwargs: Any
-    ) -> KillTerminalCommandResponse | None:
+    ) -> KillTerminalResponse | None:
         raise NotImplementedError
 
     async def ext_method(self, method: str, params: dict) -> dict:
@@ -273,6 +274,11 @@ class TestAgent:
 
     async def cancel(self, session_id: str, **kwargs: Any) -> None:
         self.cancellations.append(session_id)
+
+    async def list_sessions(
+        self, cursor: str | None = None, cwd: str | None = None, **kwargs: Any
+    ) -> ListSessionsResponse:
+        return ListSessionsResponse(sessions=[])
 
     async def set_session_mode(self, mode_id: str, session_id: str, **kwargs: Any) -> SetSessionModeResponse | None:
         return SetSessionModeResponse()

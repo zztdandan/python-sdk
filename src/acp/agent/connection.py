@@ -17,8 +17,8 @@ from ..schema import (
     CreateTerminalResponse,
     CurrentModeUpdate,
     EnvVariable,
-    KillTerminalCommandRequest,
-    KillTerminalCommandResponse,
+    KillTerminalRequest,
+    KillTerminalResponse,
     PermissionOption,
     ReadTextFileRequest,
     ReadTextFileResponse,
@@ -191,15 +191,13 @@ class AgentSideConnection:
             WaitForTerminalExitResponse,
         )
 
-    @param_model(KillTerminalCommandRequest)
-    async def kill_terminal(
-        self, session_id: str, terminal_id: str, **kwargs: Any
-    ) -> KillTerminalCommandResponse | None:
+    @param_model(KillTerminalRequest)
+    async def kill_terminal(self, session_id: str, terminal_id: str, **kwargs: Any) -> KillTerminalResponse | None:
         return await request_optional_model(
             self._conn,
             CLIENT_METHODS["terminal_kill"],
-            KillTerminalCommandRequest(session_id=session_id, terminal_id=terminal_id, field_meta=kwargs or None),
-            KillTerminalCommandResponse,
+            KillTerminalRequest(session_id=session_id, terminal_id=terminal_id, field_meta=kwargs or None),
+            KillTerminalResponse,
         )
 
     async def ext_method(self, method: str, params: dict[str, Any]) -> dict[str, Any]:

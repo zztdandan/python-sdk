@@ -1,5 +1,5 @@
 # Generated from schema/schema.json. Do not edit by hand.
-# Schema ref: refs/tags/v0.10.8
+# Schema ref: refs/tags/v0.11.2
 
 from __future__ import annotations
 
@@ -30,7 +30,73 @@ class Jsonrpc(Enum):
     field_2_0 = "2.0"
 
 
-class AuthMethod(BaseModel):
+class AuthCapabilities(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # Whether the client supports `terminal` authentication methods.
+    #
+    # When `true`, the agent may include `terminal` entries in its authentication methods.
+    terminal: Annotated[
+        Optional[bool],
+        Field(
+            description="Whether the client supports `terminal` authentication methods.\n\nWhen `true`, the agent may include `terminal` entries in its authentication methods."
+        ),
+    ] = False
+
+
+class AuthEnvVar(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # Human-readable label for this variable, displayed in client UI.
+    label: Annotated[
+        Optional[str],
+        Field(description="Human-readable label for this variable, displayed in client UI."),
+    ] = None
+    # The environment variable name (e.g. `"OPENAI_API_KEY"`).
+    name: Annotated[
+        str,
+        Field(description='The environment variable name (e.g. `"OPENAI_API_KEY"`).'),
+    ]
+    # Whether this variable is optional.
+    #
+    # Defaults to `false`.
+    optional: Annotated[
+        Optional[bool],
+        Field(description="Whether this variable is optional.\n\nDefaults to `false`."),
+    ] = False
+    # Whether this value is a secret (e.g. API key, token).
+    # Clients should use a password-style input for secret vars.
+    #
+    # Defaults to `true`.
+    secret: Annotated[
+        Optional[bool],
+        Field(
+            description="Whether this value is a secret (e.g. API key, token).\nClients should use a password-style input for secret vars.\n\nDefaults to `true`."
+        ),
+    ] = True
+
+
+class AuthMethodAgent(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
     # these keys.
@@ -47,6 +113,74 @@ class AuthMethod(BaseModel):
     description: Annotated[
         Optional[str],
         Field(description="Optional description providing more details about this authentication method."),
+    ] = None
+    # Unique identifier for this authentication method.
+    id: Annotated[str, Field(description="Unique identifier for this authentication method.")]
+    # Human-readable name of the authentication method.
+    name: Annotated[str, Field(description="Human-readable name of the authentication method.")]
+
+
+class AuthMethodEnvVar(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # Optional description providing more details about this authentication method.
+    description: Annotated[
+        Optional[str],
+        Field(description="Optional description providing more details about this authentication method."),
+    ] = None
+    # Unique identifier for this authentication method.
+    id: Annotated[str, Field(description="Unique identifier for this authentication method.")]
+    # Optional link to a page where the user can obtain their credentials.
+    link: Annotated[
+        Optional[str],
+        Field(description="Optional link to a page where the user can obtain their credentials."),
+    ] = None
+    # Human-readable name of the authentication method.
+    name: Annotated[str, Field(description="Human-readable name of the authentication method.")]
+    # The environment variables the client should set.
+    vars: Annotated[
+        List[AuthEnvVar],
+        Field(description="The environment variables the client should set."),
+    ]
+
+
+class AuthMethodTerminal(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # Additional arguments to pass when running the agent binary for terminal auth.
+    args: Annotated[
+        Optional[List[str]],
+        Field(description="Additional arguments to pass when running the agent binary for terminal auth."),
+    ] = None
+    # Optional description providing more details about this authentication method.
+    description: Annotated[
+        Optional[str],
+        Field(description="Optional description providing more details about this authentication method."),
+    ] = None
+    # Additional environment variables to set when running the agent binary for terminal auth.
+    env: Annotated[
+        Optional[Dict[str, str]],
+        Field(description="Additional environment variables to set when running the agent binary for terminal auth."),
     ] = None
     # Unique identifier for this authentication method.
     id: Annotated[str, Field(description="Unique identifier for this authentication method.")]
@@ -109,6 +243,21 @@ class BlobResourceContents(BaseModel):
     blob: str
     mime_type: Annotated[Optional[str], Field(alias="mimeType")] = None
     uri: str
+
+
+class CloseSessionResponse(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
 
 
 class Cost(BaseModel):
@@ -184,7 +333,7 @@ class EnvVariable(BaseModel):
     value: Annotated[str, Field(description="The value to set for the environment variable.")]
 
 
-class FileSystemCapability(BaseModel):
+class FileSystemCapabilities(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
     # these keys.
@@ -275,7 +424,7 @@ class Implementation(BaseModel):
     ]
 
 
-class KillTerminalCommandResponse(BaseModel):
+class KillTerminalResponse(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
     # these keys.
@@ -524,6 +673,29 @@ class SelectedPermissionOutcome(BaseModel):
     ]
 
 
+class SessionCloseCapabilities(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+
+
+class SessionConfigBoolean(BaseModel):
+    # The current value of the boolean option.
+    current_value: Annotated[
+        bool,
+        Field(alias="currentValue", description="The current value of the boolean option."),
+    ]
+
+
 class SessionForkCapabilities(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
@@ -658,7 +830,7 @@ class SessionInfoUpdate(_SessionInfoUpdate):
     session_update: Annotated[Literal["session_info_update"], Field(alias="sessionUpdate")]
 
 
-class SetSessionConfigOptionRequest(BaseModel):
+class SetSessionConfigOptionBooleanRequest(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
     # these keys.
@@ -684,8 +856,39 @@ class SetSessionConfigOptionRequest(BaseModel):
             description="The ID of the session to set the configuration option for.",
         ),
     ]
-    # The ID of the configuration option value to set.
-    value: Annotated[str, Field(description="The ID of the configuration option value to set.")]
+    type: Literal["boolean"]
+    # The boolean value.
+    value: Annotated[bool, Field(description="The boolean value.")]
+
+
+class SetSessionConfigOptionSelectRequest(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # The ID of the configuration option to set.
+    config_id: Annotated[
+        str,
+        Field(alias="configId", description="The ID of the configuration option to set."),
+    ]
+    # The ID of the session to set the configuration option for.
+    session_id: Annotated[
+        str,
+        Field(
+            alias="sessionId",
+            description="The ID of the session to set the configuration option for.",
+        ),
+    ]
+    # The value ID.
+    value: Annotated[str, Field(description="The value ID.")]
 
 
 class SetSessionModeRequest(BaseModel):
@@ -711,7 +914,18 @@ class SetSessionModeRequest(BaseModel):
 
 
 class SetSessionModeResponse(BaseModel):
-    field_meta: Annotated[Optional[Dict[str, Any]], Field(alias="_meta")] = None
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
 
 
 class SetSessionModelRequest(BaseModel):
@@ -1096,6 +1310,14 @@ class AudioContent(BaseModel):
     mime_type: Annotated[str, Field(alias="mimeType")]
 
 
+class EnvVarAuthMethod(AuthMethodEnvVar):
+    type: Literal["env_var"]
+
+
+class TerminalAuthMethod(AuthMethodTerminal):
+    type: Literal["terminal"]
+
+
 class AvailableCommandInput(RootModel[UnstructuredCommandInput]):
     # The input specification for a command.
     root: Annotated[
@@ -1160,14 +1382,27 @@ class ClientCapabilities(BaseModel):
             description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
         ),
     ] = None
+    # **UNSTABLE**
+    #
+    # This capability is not part of the spec yet, and may be removed or changed at any point.
+    #
+    # Authentication capabilities supported by the client.
+    # Determines which authentication method types the agent may include
+    # in its `InitializeResponse`.
+    auth: Annotated[
+        Optional[AuthCapabilities],
+        Field(
+            description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nAuthentication capabilities supported by the client.\nDetermines which authentication method types the agent may include\nin its `InitializeResponse`."
+        ),
+    ] = {"terminal": False}
     # File system capabilities supported by the client.
     # Determines which file operations the agent can request.
     fs: Annotated[
-        Optional[FileSystemCapability],
+        Optional[FileSystemCapabilities],
         Field(
             description="File system capabilities supported by the client.\nDetermines which file operations the agent can request."
         ),
-    ] = FileSystemCapability()
+    ] = FileSystemCapabilities()
     # Whether the Client support all `terminal/*` methods.
     terminal: Annotated[
         Optional[bool],
@@ -1178,6 +1413,23 @@ class ClientCapabilities(BaseModel):
 class ClientNotification(BaseModel):
     method: str
     params: Optional[Union[CancelNotification, Any]] = None
+
+
+class CloseSessionRequest(BaseModel):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # The ID of the session to close.
+    session_id: Annotated[str, Field(alias="sessionId", description="The ID of the session to close.")]
 
 
 class AudioContentBlock(AudioContent):
@@ -1337,7 +1589,7 @@ class InitializeRequest(BaseModel):
     ]
 
 
-class KillTerminalCommandRequest(BaseModel):
+class KillTerminalRequest(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
     # these keys.
@@ -1507,6 +1759,22 @@ class PromptResponse(BaseModel):
             description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nToken usage for this turn (optional)."
         ),
     ] = None
+    # **UNSTABLE**
+    #
+    # This capability is not part of the spec yet, and may be removed or changed at any point.
+    #
+    # The acknowledged user message ID.
+    #
+    # If the client provided a `messageId` in the [`PromptRequest`], the agent echoes it here
+    # to confirm it was recorded. If the client did not provide one, the agent MAY assign one
+    # and return it here. Absence of this field indicates the agent did not record a message ID.
+    user_message_id: Annotated[
+        Optional[str],
+        Field(
+            alias="userMessageId",
+            description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nThe acknowledged user message ID.\n\nIf the client provided a `messageId` in the [`PromptRequest`], the agent echoes it here\nto confirm it was recorded. If the client did not provide one, the agent MAY assign one\nand return it here. Absence of this field indicates the agent did not record a message ID.",
+        ),
+    ] = None
 
 
 class ReadTextFileRequest(BaseModel):
@@ -1647,6 +1915,17 @@ class SessionCapabilities(BaseModel):
     #
     # This capability is not part of the spec yet, and may be removed or changed at any point.
     #
+    # Whether the agent supports `session/close`.
+    close: Annotated[
+        Optional[SessionCloseCapabilities],
+        Field(
+            description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nWhether the agent supports `session/close`."
+        ),
+    ] = None
+    # **UNSTABLE**
+    #
+    # This capability is not part of the spec yet, and may be removed or changed at any point.
+    #
     # Whether the agent supports `session/fork`.
     fork: Annotated[
         Optional[SessionForkCapabilities],
@@ -1654,16 +1933,10 @@ class SessionCapabilities(BaseModel):
             description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nWhether the agent supports `session/fork`."
         ),
     ] = None
-    # **UNSTABLE**
-    #
-    # This capability is not part of the spec yet, and may be removed or changed at any point.
-    #
     # Whether the agent supports `session/list`.
     list: Annotated[
         Optional[SessionListCapabilities],
-        Field(
-            description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nWhether the agent supports `session/list`."
-        ),
+        Field(description="Whether the agent supports `session/list`."),
     ] = None
     # **UNSTABLE**
     #
@@ -1676,6 +1949,36 @@ class SessionCapabilities(BaseModel):
             description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nWhether the agent supports `session/resume`."
         ),
     ] = None
+
+
+class SessionConfigOptionBoolean(SessionConfigBoolean):
+    # The _meta property is reserved by ACP to allow clients and agents to attach additional
+    # metadata to their interactions. Implementations MUST NOT make assumptions about values at
+    # these keys.
+    #
+    # See protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)
+    field_meta: Annotated[
+        Optional[Dict[str, Any]],
+        Field(
+            alias="_meta",
+            description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # Optional semantic category for this option (UX only).
+    category: Annotated[
+        Optional[str],
+        Field(description="Optional semantic category for this option (UX only)."),
+    ] = None
+    # Optional description for the Client to display to the user.
+    description: Annotated[
+        Optional[str],
+        Field(description="Optional description for the Client to display to the user."),
+    ] = None
+    # Unique identifier for the configuration option.
+    id: Annotated[str, Field(description="Unique identifier for the configuration option.")]
+    # Human-readable label for the option.
+    name: Annotated[str, Field(description="Human-readable label for the option.")]
+    type: Literal["boolean"]
 
 
 class SessionConfigSelectOption(BaseModel):
@@ -1910,7 +2213,7 @@ class ClientResponseMessage(BaseModel):
             TerminalOutputResponse,
             ReleaseTerminalResponse,
             WaitForTerminalExitResponse,
-            KillTerminalCommandResponse,
+            KillTerminalResponse,
             Any,
         ],
         Field(
@@ -2035,7 +2338,7 @@ class InitializeResponse(BaseModel):
     ] = None
     # Authentication methods supported by the agent.
     auth_methods: Annotated[
-        Optional[List[AuthMethod]],
+        Optional[List[Union[EnvVarAuthMethod, TerminalAuthMethod, AuthMethodAgent]]],
         Field(
             alias="authMethods",
             description="Authentication methods supported by the agent.",
@@ -2164,6 +2467,22 @@ class ContentChunk(BaseModel):
         ],
         Field(description="A single item of content", discriminator="type"),
     ]
+    # **UNSTABLE**
+    #
+    # This capability is not part of the spec yet, and may be removed or changed at any point.
+    #
+    # A unique identifier for the message this chunk belongs to.
+    #
+    # All chunks belonging to the same message share the same `messageId`.
+    # A change in `messageId` indicates a new message has started.
+    # Both clients and agents MUST use UUID format for message IDs.
+    message_id: Annotated[
+        Optional[str],
+        Field(
+            alias="messageId",
+            description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nA unique identifier for the message this chunk belongs to.\n\nAll chunks belonging to the same message share the same `messageId`.\nA change in `messageId` indicates a new message has started.\nBoth clients and agents MUST use UUID format for message IDs.",
+        ),
+    ] = None
 
 
 class PromptRequest(BaseModel):
@@ -2177,6 +2496,22 @@ class PromptRequest(BaseModel):
         Field(
             alias="_meta",
             description="The _meta property is reserved by ACP to allow clients and agents to attach additional\nmetadata to their interactions. Implementations MUST NOT make assumptions about values at\nthese keys.\n\nSee protocol docs: [Extensibility](https://agentclientprotocol.com/protocol/extensibility)",
+        ),
+    ] = None
+    # **UNSTABLE**
+    #
+    # This capability is not part of the spec yet, and may be removed or changed at any point.
+    #
+    # A client-generated unique identifier for this user message.
+    #
+    # If provided, the Agent SHOULD echo this value as `userMessageId` in the
+    # [`PromptResponse`] to confirm it was recorded.
+    # Both clients and agents MUST use UUID format for message IDs.
+    message_id: Annotated[
+        Optional[str],
+        Field(
+            alias="messageId",
+            description="**UNSTABLE**\n\nThis capability is not part of the spec yet, and may be removed or changed at any point.\n\nA client-generated unique identifier for this user message.\n\nIf provided, the Agent SHOULD echo this value as `userMessageId` in the\n[`PromptResponse`] to confirm it was recorded.\nBoth clients and agents MUST use UUID format for message IDs.",
         ),
     ] = None
     # The blocks of content that compose the user's message.
@@ -2264,10 +2599,11 @@ class ClientRequest(BaseModel):
             ListSessionsRequest,
             ForkSessionRequest,
             ResumeSessionRequest,
+            CloseSessionRequest,
             SetSessionModeRequest,
-            SetSessionConfigOptionRequest,
             PromptRequest,
             SetSessionModelRequest,
+            Union[SetSessionConfigOptionBooleanRequest, SetSessionConfigOptionSelectRequest],
             Any,
         ]
     ] = None
@@ -2325,17 +2661,6 @@ class SessionConfigOptionSelect(SessionConfigSelect):
     type: Literal["select"]
 
 
-class SessionConfigOption(RootModel[SessionConfigOptionSelect]):
-    # A session configuration option selector and its current state.
-    root: Annotated[
-        SessionConfigOptionSelect,
-        Field(
-            description="A session configuration option selector and its current state.",
-            discriminator="type",
-        ),
-    ]
-
-
 class SetSessionConfigOptionResponse(BaseModel):
     # The _meta property is reserved by ACP to allow clients and agents to attach additional
     # metadata to their interactions. Implementations MUST NOT make assumptions about values at
@@ -2351,7 +2676,7 @@ class SetSessionConfigOptionResponse(BaseModel):
     ] = None
     # The full set of configuration options and their current values.
     config_options: Annotated[
-        List[SessionConfigOption],
+        List[Union[SessionConfigOptionSelect, SessionConfigOptionBoolean]],
         Field(
             alias="configOptions",
             description="The full set of configuration options and their current values.",
@@ -2418,7 +2743,7 @@ class _ConfigOptionUpdate(BaseModel):
     ] = None
     # The full set of configuration options and their current values.
     config_options: Annotated[
-        List[SessionConfigOption],
+        List[Union[SessionConfigOptionSelect, SessionConfigOptionBoolean]],
         Field(
             alias="configOptions",
             description="The full set of configuration options and their current values.",
@@ -2441,7 +2766,7 @@ class ForkSessionResponse(BaseModel):
     ] = None
     # Initial session configuration options if supported by the Agent.
     config_options: Annotated[
-        Optional[List[SessionConfigOption]],
+        Optional[List[Union[SessionConfigOptionSelect, SessionConfigOptionBoolean]]],
         Field(
             alias="configOptions",
             description="Initial session configuration options if supported by the Agent.",
@@ -2492,7 +2817,7 @@ class LoadSessionResponse(BaseModel):
     ] = None
     # Initial session configuration options if supported by the Agent.
     config_options: Annotated[
-        Optional[List[SessionConfigOption]],
+        Optional[List[Union[SessionConfigOptionSelect, SessionConfigOptionBoolean]]],
         Field(
             alias="configOptions",
             description="Initial session configuration options if supported by the Agent.",
@@ -2535,7 +2860,7 @@ class NewSessionResponse(BaseModel):
     ] = None
     # Initial session configuration options if supported by the Agent.
     config_options: Annotated[
-        Optional[List[SessionConfigOption]],
+        Optional[List[Union[SessionConfigOptionSelect, SessionConfigOptionBoolean]]],
         Field(
             alias="configOptions",
             description="Initial session configuration options if supported by the Agent.",
@@ -2618,7 +2943,7 @@ class ResumeSessionResponse(BaseModel):
     ] = None
     # Initial session configuration options if supported by the Agent.
     config_options: Annotated[
-        Optional[List[SessionConfigOption]],
+        Optional[List[Union[SessionConfigOptionSelect, SessionConfigOptionBoolean]]],
         Field(
             alias="configOptions",
             description="Initial session configuration options if supported by the Agent.",
@@ -2739,7 +3064,7 @@ class AgentRequest(BaseModel):
             TerminalOutputRequest,
             ReleaseTerminalRequest,
             WaitForTerminalExitRequest,
-            KillTerminalCommandRequest,
+            KillTerminalRequest,
             Any,
         ]
     ] = None
@@ -2776,6 +3101,7 @@ class AgentResponseMessage(BaseModel):
             ListSessionsResponse,
             ForkSessionResponse,
             ResumeSessionResponse,
+            CloseSessionResponse,
             SetSessionModeResponse,
             SetSessionConfigOptionResponse,
             PromptResponse,

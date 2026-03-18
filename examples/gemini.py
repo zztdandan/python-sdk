@@ -33,8 +33,8 @@ from acp.schema import (
     EmbeddedResourceContentBlock,
     EnvVariable,
     FileEditToolCallContent,
-    FileSystemCapability,
-    KillTerminalCommandResponse,
+    FileSystemCapabilities,
+    KillTerminalResponse,
     PermissionOption,
     ReadTextFileResponse,
     ReleaseTerminalResponse,
@@ -183,11 +183,9 @@ class GeminiClient(Client):
         print(f"[Client] waitForTerminalExit: {session_id} {terminal_id}")
         return WaitForTerminalExitResponse()
 
-    async def kill_terminal(
-        self, session_id: str, terminal_id: str, **kwargs: Any
-    ) -> KillTerminalCommandResponse | None:
+    async def kill_terminal(self, session_id: str, terminal_id: str, **kwargs: Any) -> KillTerminalResponse | None:
         print(f"[Client] killTerminal: {session_id} {terminal_id}")
-        return KillTerminalCommandResponse()
+        return KillTerminalResponse()
 
 
 def _pick_preferred_option(options: Iterable[PermissionOption]) -> PermissionOption | None:
@@ -320,7 +318,7 @@ async def run(argv: list[str]) -> int:  # noqa: C901
         init_resp = await conn.initialize(
             protocol_version=PROTOCOL_VERSION,
             client_capabilities=ClientCapabilities(
-                fs=FileSystemCapability(read_text_file=True, write_text_file=True),
+                fs=FileSystemCapabilities(read_text_file=True, write_text_file=True),
                 terminal=True,
             ),
         )

@@ -9,6 +9,7 @@ from ..router import MessageRouter
 from ..schema import (
     AuthenticateRequest,
     CancelNotification,
+    CloseSessionRequest,
     ForkSessionRequest,
     InitializeRequest,
     ListSessionsRequest,
@@ -16,7 +17,7 @@ from ..schema import (
     NewSessionRequest,
     PromptRequest,
     ResumeSessionRequest,
-    SetSessionConfigOptionRequest,
+    SetSessionConfigOptionSelectRequest,
     SetSessionModelRequest,
     SetSessionModeRequest,
 )
@@ -37,7 +38,15 @@ def build_agent_router(agent: Agent, use_unstable_protocol: bool = False) -> Mes
         "load_session",
         adapt_result=normalize_result,
     )
-    router.route_request(AGENT_METHODS["session_list"], ListSessionsRequest, agent, "list_sessions", unstable=True)
+    router.route_request(AGENT_METHODS["session_list"], ListSessionsRequest, agent, "list_sessions")
+    router.route_request(
+        AGENT_METHODS["session_close"],
+        CloseSessionRequest,
+        agent,
+        "close_session",
+        adapt_result=normalize_result,
+        unstable=True,
+    )
     router.route_request(
         AGENT_METHODS["session_set_mode"],
         SetSessionModeRequest,
@@ -56,7 +65,7 @@ def build_agent_router(agent: Agent, use_unstable_protocol: bool = False) -> Mes
     )
     router.route_request(
         AGENT_METHODS["session_set_config_option"],
-        SetSessionConfigOptionRequest,
+        SetSessionConfigOptionSelectRequest,
         agent,
         "set_config_option",
         adapt_result=normalize_result,

@@ -38,6 +38,7 @@ from acp.schema import (
     HttpMcpServer,
     ImageContentBlock,
     Implementation,
+    ListSessionsResponse,
     McpServerStdio,
     PermissionOption,
     ResourceContentBlock,
@@ -261,6 +262,15 @@ async def test_set_config_option(connect, agent, client):
     resp = await agent_conn.set_config_option(session_id="sess", config_id="theme", value="dark")
     assert isinstance(resp, SetSessionConfigOptionResponse)
     assert resp.config_options == []
+
+
+@pytest.mark.asyncio
+async def test_list_sessions_stable(connect, agent, client):
+    _, agent_conn = connect()
+
+    resp = await agent_conn.list_sessions()
+    assert isinstance(resp, ListSessionsResponse)
+    assert resp.sessions == []
 
 
 @pytest.mark.asyncio
