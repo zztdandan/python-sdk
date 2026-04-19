@@ -83,6 +83,7 @@ class Connection:
         self._tasks.add_error_handler(self._on_task_error)
         self._queue = queue or InMemoryMessageQueue()
         self._closed = False
+        self._disconnected = False
         self._sender = (sender_factory or self._default_sender_factory)(self._writer, self._tasks)
         if listening:
             self._recv_task = self._tasks.create(
@@ -132,6 +133,7 @@ class Connection:
         self._observers.append(observer)
 
     async def send_request(self, method: str, params: JsonValue | None = None) -> Any:
+        self._raise_if_unavailable()
         request_id = self._next_request_id
         self._next_request_id += 1
         future = self._state.register_outgoing(request_id, method)
@@ -141,6 +143,7 @@ class Connection:
         return await future
 
     async def send_notification(self, method: str, params: JsonValue | None = None) -> None:
+        self._raise_if_unavailable()
         payload = {"jsonrpc": "2.0", "method": method, "params": params}
         await self._sender.send(payload)
         self._notify_observers(StreamDirection.OUTGOING, payload)
@@ -160,6 +163,7 @@ class Connection:
                 await self._process_message(message)
         except asyncio.CancelledError:
             return
+        self._disconnect()
 
     async def _process_message(self, message: dict[str, Any]) -> None:
         method = message.get("method")
@@ -262,7 +266,7 @@ class Connection:
 
     def _on_receive_error(self, task: asyncio.Task[Any], exc: BaseException) -> None:
         logging.exception("Receive loop failed", exc_info=exc)
-        self._state.reject_all_outgoing(exc)
+        self._disconnect()
 
     def _on_task_error(self, task: asyncio.Task[Any], exc: BaseException) -> None:
         logging.exception("Background task failed", exc_info=exc)
@@ -285,3 +289,13 @@ class Connection:
 
     def _default_sender_factory(self, writer: asyncio.StreamWriter, supervisor: TaskSupervisor) -> MessageSender:
         return MessageSender(writer, supervisor)
+
+    def _disconnect(self) -> None:
+        if self._disconnected:
+            return
+        self._disconnected = True
+        self._state.reject_all_outgoing(ConnectionError("Connection closed"))
+
+    def _raise_if_unavailable(self) -> None:
+        if self._disconnected or self._closed:
+            raise ConnectionError("Connection closed")
