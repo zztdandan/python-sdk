@@ -6,7 +6,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-from pydantic import AnyUrl, BaseModel as _BaseModel, Field, RootModel, ConfigDict
+from pydantic import AnyUrl, BaseModel as _BaseModel, Field, RootModel, ConfigDict, field_validator
 
 PermissionOptionKind = Literal["allow_once", "allow_always", "reject_once", "reject_always"]
 PlanEntryPriority = Literal["high", "medium", "low"]
@@ -3921,6 +3921,20 @@ class InitializeRequest(BaseModel):
             le=65535,
         ),
     ]
+
+    @field_validator("protocol_version", mode="before")
+    @classmethod
+    def _coerce_protocol_version(cls, value: Any) -> int:
+        # Some clients (e.g. Zed) send a date string like "2024-11-05" instead
+        # of an integer. The Rust SDK treats legacy strings as version 0; this
+        # SDK maps unparsable values to 1 so the connection is not rejected.
+        # See: https://github.com/agentclientprotocol/rust-sdk/blob/main/crates/agent-client-protocol-schema/src/version.rs
+        if isinstance(value, int):
+            return value
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 1
 
 
 class LoadSessionRequest(BaseModel):

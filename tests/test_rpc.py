@@ -236,8 +236,8 @@ async def test_invalid_params_results_in_error_response(connect, server):
     # Only start agent-side (server) so we can inject raw request from client socket
     connect(connect_agent=True, connect_client=False)
 
-    # Send initialize with wrong param type (protocolVersion should be int)
-    req = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "oops"}}
+    # Send initialize without the required protocolVersion field.
+    req = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
     server.client_writer.write((json.dumps(req) + "\n").encode())
     await server.client_writer.drain()
 
@@ -247,6 +247,22 @@ async def test_invalid_params_results_in_error_response(connect, server):
     assert resp["id"] == 1
     assert "error" in resp
     assert resp["error"]["code"] == -32602  # invalid params
+
+
+@pytest.mark.asyncio
+async def test_initialize_accepts_legacy_string_protocol_version(connect, server):
+    # Only start agent-side (server) so we can inject raw request from client socket.
+    connect(connect_agent=True, connect_client=False)
+
+    req = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05"}}
+    server.client_writer.write((json.dumps(req) + "\n").encode())
+    await server.client_writer.drain()
+
+    line = await asyncio.wait_for(server.client_reader.readline(), timeout=1)
+    resp = json.loads(line)
+    assert resp["id"] == 1
+    assert "error" not in resp
+    assert resp["result"]["protocolVersion"] == 1
 
 
 @pytest.mark.asyncio

@@ -116,6 +116,30 @@ FIELD_TYPE_OVERRIDES: tuple[tuple[str, str, str, bool], ...] = (
     ("ToolCallUpdate", "status", "ToolCallStatus", True),
 )
 
+
+@dataclass(frozen=True)
+class FieldValidatorInjection:
+    """A generated field validator that should be appended to one schema class."""
+
+    class_name: str
+    field_name: str
+    method_name: str
+    argument_name: str
+    return_type: str
+    comment_lines: tuple[str, ...]
+    body_lines: tuple[str, ...]
+
+    def render(self) -> str:
+        lines = [
+            f'@field_validator("{self.field_name}", mode="before")',
+            "@classmethod",
+            f"def {self.method_name}(cls, {self.argument_name}: Any) -> {self.return_type}:",
+        ]
+        lines.extend(f"    # {line}" for line in self.comment_lines)
+        lines.extend(f"    {line}" for line in self.body_lines)
+        return "\n".join(lines)
+
+
 DEFAULT_VALUE_OVERRIDES: tuple[tuple[str, str, str], ...] = (
     ("AgentCapabilities", "mcp_capabilities", "McpCapabilities()"),
     ("AgentCapabilities", "session_capabilities", "SessionCapabilities()"),
@@ -135,6 +159,31 @@ DEFAULT_VALUE_OVERRIDES: tuple[tuple[str, str, str], ...] = (
         "InitializeResponse",
         "agent_capabilities",
         "AgentCapabilities()",
+    ),
+)
+
+# Classes that need a field_validator injected after generation.
+CLASS_VALIDATOR_INJECTIONS: tuple[FieldValidatorInjection, ...] = (
+    FieldValidatorInjection(
+        class_name="InitializeRequest",
+        field_name="protocol_version",
+        method_name="_coerce_protocol_version",
+        argument_name="value",
+        return_type="int",
+        comment_lines=(
+            'Some clients (e.g. Zed) send a date string like "2024-11-05" instead',
+            "of an integer. The Rust SDK treats legacy strings as version 0; this",
+            "SDK maps unparsable values to 1 so the connection is not rejected.",
+            "See: https://github.com/agentclientprotocol/rust-sdk/blob/main/crates/agent-client-protocol-schema/src/version.rs",
+        ),
+        body_lines=(
+            "if isinstance(value, int):",
+            "    return value",
+            "try:",
+            "    return int(value)",
+            "except (TypeError, ValueError):",
+            "    return 1",
+        ),
     ),
 )
 
@@ -200,6 +249,7 @@ def postprocess_generated_schema(output_path: Path) -> list[str]:
         _ProcessingStep("apply default overrides", _apply_default_overrides),
         _ProcessingStep("attach description comments", _add_description_comments),
         _ProcessingStep("ensure custom BaseModel", _ensure_custom_base_model),
+        _ProcessingStep("inject field validators", _inject_field_validators),
     )
 
     for step in processing_steps:
@@ -354,6 +404,47 @@ def _ensure_custom_base_model(content: str) -> str:
             lines.insert(insert_idx + offset, line)
         break
     return "\n".join(lines) + "\n"
+
+
+def _ensure_pydantic_import(content: str, name: str) -> str:
+    """Add *name* to the ``from pydantic import ...`` line if not already present."""
+    lines = content.splitlines()
+    for idx, line in enumerate(lines):
+        if not line.startswith("from pydantic import "):
+            continue
+        imports = [part.strip() for part in line[len("from pydantic import ") :].split(",")]
+        if name not in imports:
+            imports.append(name)
+            lines[idx] = "from pydantic import " + ", ".join(imports)
+        return "\n".join(lines) + "\n"
+    return content
+
+
+def _inject_field_validators(content: str) -> str:
+    """Inject field_validator methods into classes listed in CLASS_VALIDATOR_INJECTIONS."""
+    for injection in CLASS_VALIDATOR_INJECTIONS:
+        content = _ensure_pydantic_import(content, "field_validator")
+
+        class_pattern = re.compile(
+            rf"(class {injection.class_name}\(BaseModel\):)(.*?)(?=\nclass |\Z)",
+            re.DOTALL,
+        )
+
+        def _append_validator(
+            match: re.Match[str],
+            _injection: FieldValidatorInjection = injection,
+        ) -> str:
+            header, block = match.group(1), match.group(2)
+            indented = "\n" + textwrap.indent(_injection.render(), "    ")
+            return header + block + indented + "\n"
+
+        content, count = class_pattern.subn(_append_validator, content, count=1)
+        if count == 0:
+            print(
+                f"Warning: class {injection.class_name} not found for validator injection",
+                file=sys.stderr,
+            )
+    return content
 
 
 def _apply_field_overrides(content: str) -> str:
